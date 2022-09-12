@@ -25,6 +25,7 @@ func NewClient(host string) (*Client, error) {
 	}, nil
 }
 
+// SendEmail queue email.
 func (c *Client) SendEmail(p *Param) error {
 	if p == nil {
 		return ErrParamRequired
@@ -34,8 +35,8 @@ func (c *Client) SendEmail(p *Param) error {
 		return ErrTemplateNameRequired
 	}
 
-	if len(p.EmailReceiver.To) == 0 && len(p.EmailReceiver.CC) == 0 && len(p.EmailReceiver.BCC) == 0 {
-		return ErrEmailReceiverRequired
+	if err := p.EmailReceiver.IsValid(); err != nil {
+		return err
 	}
 
 	if !isValidLanguage[p.Language] {
@@ -53,7 +54,7 @@ func (c *Client) SendEmail(p *Param) error {
 	res, err := c.client.R().
 		SetHeader(headerContentType, mimeTypeJson).
 		SetHeader(headerAccept, mimeTypeJson).
-		SetHeader(headerAcceptLanguage, p.Language).
+		SetHeader(headerAcceptLanguage, string(p.Language)).
 		SetBody(p).
 		Post(targetUrl)
 	if err != nil {
